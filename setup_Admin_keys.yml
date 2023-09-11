@@ -1,0 +1,23 @@
+---
+- name: Copy SSH Key to Windows Server
+  hosts: win_ssh
+  tasks:
+    - name: copy over public SSH key
+      win_copy:
+        src: id_rsa.pub
+        dest: C:\Users\Administrator\id_rsa.pub
+
+    - name: Display contents of %ProgramData%
+      win_shell: |
+        $program_data = (Get-Item Env:ProgramData).Value
+        dir $program_data
+        dir $program_data\ssh
+        Copy-Item -Path "C:\Users\Administrator\id_rsa.pub" -Destination "$program_data\ssh\id_rsa.pub"
+        Get-Content -Path "$program_data\ssh\id_rsa.pub" | Add-Content -Path "$program_data\ssh\administrators_authorized_keys"
+        icacls "$program_data\ssh\administrators_authorized_keys" /inheritance:r /grant "Administrator:F" /grant "SYSTEM:F"
+      register: result
+
+    - name: Show output
+      debug:
+        var: result.stdout_lines
+
